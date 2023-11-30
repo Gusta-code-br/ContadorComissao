@@ -5,6 +5,8 @@ from datetime import date
 import pandas as pd
 import openpyxl
 from openpyxl import Workbook
+from tkinter import ttk as tabviw
+from tkinter import messagebox
 
 
 def change_appearance_mode_event(new_appearance_mode: str):
@@ -61,16 +63,17 @@ class App(customtkinter.CTk):
         self.label_title.grid(row=0, column=1, padx=(180, 10), pady=10, columnspan=4)
         self.opcao_funcao = customtkinter.CTkComboBox(master=self, values=['Função', 'Torneiro', 'Soldador'])
         self.opcao_funcao.grid(row=1, column=1, padx=(200, 40), pady=0)
-        self.opcao_nome = customtkinter.CTkComboBox(master=self, values=['Funcionário', 'Rayner Custódio Souza Ramos',
-                                                                         'Jéssica Magre Lemes',
-                                                                         'Maria Eduarda Lira Lemes Braz'], )
+        self.opcao_nome = customtkinter.CTkComboBox(master=self, values=['Funcionário', 'Jéssica Magre Lemes',
+                                                                         'Rayner Custódio Souza Ramos',
+                                                                         'Gustavo Henrique Rodrigues da Cruz'])
+        self.opcao_nome.grid(row=1, column=2, padx=10, pady=10)
         self.confirm = customtkinter.CTkButton(self, text='Confirmar', command=self.confirmar)
         self.confirm.grid(row=1, column=3, padx=(40, 40), pady=10)
         self.send = customtkinter.CTkButton(self, text='Enviar', command=self.comissao)
         self.send.grid(row=1, column=4, padx=(10, 40), pady=10)
 
         # segunda linha
-        self.opcao_nome.grid(row=1, column=2, padx=10, pady=10)
+
         self.valor_servico = customtkinter.CTkEntry(self, placeholder_text='Valor do serviço')
         self.profissao_label = customtkinter.CTkLabel(self, text='')
         self.profissao_label.grid(row=2, column=1, padx=(200, 40), pady=(10, 300))
@@ -80,6 +83,13 @@ class App(customtkinter.CTk):
         self.valor_comissao.grid(row=2, column=4, padx=10, pady=(10, 300))
 
         # função que retornma para a tela de inicio quando saimos dela
+    def ler_excel(self):
+        try:
+            dados_excel = pd.read_excel('dbtornadora.xlsx', sheet_name='Funcionarios')
+            nomes = dados_excel['nome'].tolist()
+            self.opcao_nome['values'] = nomes
+        except FileNotFoundError:
+            print("Arquivo Excel não encontrado.")
 
     def tela_inicio(self):
         # grids que deverão ser anulados
@@ -120,12 +130,16 @@ class App(customtkinter.CTk):
         funcao = self.opcao_funcao.get()
 
         if nome == 'Funcionário':
-            nome = ""
+            nome = " "
         if funcao == 'Função':
-            funcao = ""
-        self.profissao_label.configure(text=f'{funcao}')
-        self.nome_label.configure(text=f'{nome}')
-        self.valor_servico.grid(row=2, column=3, padx=(40, 40), pady=(10, 300))
+            funcao = " "
+
+        if nome == " " or funcao == " ":
+            messagebox.showinfo("Mensagem", "Campo nome e função não podem receber ''.")
+        else:
+            self.profissao_label.configure(text=f'{funcao}')
+            self.nome_label.configure(text=f'{nome}')
+            self.valor_servico.grid(row=2, column=3, padx=(40, 40), pady=(10, 300))
 
     # calculador de valor da 'comissão'
     def comissao(self):
@@ -203,6 +217,8 @@ class App(customtkinter.CTk):
 
         self.comissao_dia = customtkinter.CTkLabel(self, text='Comissão')
         self.comissao_dia.grid(row=2, column=2, padx=(40, 40), pady=(10, 300))
+
+        self.table = tabviw.Treeview(self, selectmode="browse", columns=('Coluna1', 'Coluna2', 'Coluna3'))
 
     def calendario_i(self):
         self.funcionario.grid_forget()
