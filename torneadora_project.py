@@ -5,6 +5,9 @@ from datetime import date
 import pandas as pd
 import openpyxl
 from openpyxl import Workbook
+from tkinter import ttk as tabviw
+from tkinter import messagebox
+import subprocess
 
 
 def change_appearance_mode_event(new_appearance_mode: str):
@@ -61,16 +64,18 @@ class App(customtkinter.CTk):
         self.label_title.grid(row=0, column=1, padx=(180, 10), pady=10, columnspan=4)
         self.opcao_funcao = customtkinter.CTkComboBox(master=self, values=['Função', 'Torneiro', 'Soldador'])
         self.opcao_funcao.grid(row=1, column=1, padx=(200, 40), pady=0)
-        self.opcao_nome = customtkinter.CTkComboBox(master=self, values=['Funcionário', 'Rayner Custódio Souza Ramos',
-                                                                         'Jéssica Magre Lemes',
-                                                                         'Maria Eduarda Lira Lemes Braz'], )
+        self.opcao_nome = customtkinter.CTkComboBox(master=self, values=['Funcionário', 'Jéssica Magre Lemes',
+                                                                         'Rayner Custódio Souza Ramos',
+                                                                         'Gustavo Henrique Rodrigues da Cruz',
+                                                                         'Ludimilla Rodrigues da Cruz'])
+        self.opcao_nome.grid(row=1, column=2, padx=10, pady=10)
         self.confirm = customtkinter.CTkButton(self, text='Confirmar', command=self.confirmar)
         self.confirm.grid(row=1, column=3, padx=(40, 40), pady=10)
         self.send = customtkinter.CTkButton(self, text='Enviar', command=self.comissao)
         self.send.grid(row=1, column=4, padx=(10, 40), pady=10)
 
         # segunda linha
-        self.opcao_nome.grid(row=1, column=2, padx=10, pady=10)
+
         self.valor_servico = customtkinter.CTkEntry(self, placeholder_text='Valor do serviço')
         self.profissao_label = customtkinter.CTkLabel(self, text='')
         self.profissao_label.grid(row=2, column=1, padx=(200, 40), pady=(10, 300))
@@ -80,6 +85,13 @@ class App(customtkinter.CTk):
         self.valor_comissao.grid(row=2, column=4, padx=10, pady=(10, 300))
 
         # função que retornma para a tela de inicio quando saimos dela
+    def ler_excel(self):
+        try:
+            dados_excel = pd.read_excel('dbtornadora.xlsx', sheet_name='Funcionarios')
+            nomes = dados_excel['nome'].tolist()
+            self.opcao_nome['values'] = nomes
+        except FileNotFoundError:
+            print("Arquivo Excel não encontrado.")
 
     def tela_inicio(self):
         # grids que deverão ser anulados
@@ -120,30 +132,39 @@ class App(customtkinter.CTk):
         funcao = self.opcao_funcao.get()
 
         if nome == 'Funcionário':
-            nome = ""
+            nome = " "
         if funcao == 'Função':
-            funcao = ""
-        self.profissao_label.configure(text=f'{funcao}')
-        self.nome_label.configure(text=f'{nome}')
-        self.valor_servico.grid(row=2, column=3, padx=(40, 40), pady=(10, 300))
+            funcao = " "
+
+        if nome == " " or funcao == " ":
+            messagebox.showinfo("Mensagem", "Campo nome e função não podem receber ''.")
+        else:
+            self.profissao_label.configure(text=f'{funcao}')
+            self.nome_label.configure(text=f'{nome}')
+            self.valor_servico.grid(row=2, column=3, padx=(40, 40), pady=(10, 300))
 
     # calculador de valor da 'comissão'
     def comissao(self):
-        valor = float(self.valor_servico.get())
         nome = self.opcao_funcao.get()
 
         percent_t = 0.09
         percent_s = 0.07
-        if valor:
-            if nome == 'Torneiro':
-                self.comissao_ = valor * percent_t
-            else:
-                if nome == 'Soldador':
-                    self.comissao_ = valor * percent_s
-                else:
-                    self.comissao_ = 'Erro'
+
+        valor_str = self.valor_servico.get()
+
+        # Verificar se a string é vazia
+        if not valor_str:
+            messagebox.showinfo("Mensagem", "Não é possível enviar comissão com valor vazio.")
         else:
-            self.valor_comissao.configure(self, text='Insira um valor, depois clique em enviar.')
+            try:
+                valor = float(valor_str)
+            except ValueError:
+                messagebox.showinfo("Mensagem", "Por favor, insira um valor numérico válido.")
+                return
+            if nome == 'Torneiro':
+                self.comissao_ = float(valor*percent_t)
+            elif nome == 'Soldador':
+                self.comissao_ = float(valor*percent_s)
 
         self.valor_comissao.configure(self, text='Comissão = R$ {:.2f}'.format(self.comissao_))
 
@@ -204,6 +225,9 @@ class App(customtkinter.CTk):
         self.comissao_dia = customtkinter.CTkLabel(self, text='Comissão')
         self.comissao_dia.grid(row=2, column=2, padx=(40, 40), pady=(10, 300))
 
+        self.gerar_relatorio = customtkinter.CTkButton(self, text='Gerar relatório',command=self.gerar_relatorio)
+        self.gerar_relatorio.grid(row=2, column=1, padx=10, pady=10, rowspan=2)
+
     def calendario_i(self):
         self.funcionario.grid_forget()
         try:
@@ -225,6 +249,10 @@ class App(customtkinter.CTk):
         self.calendario2 = Calendar(self, locale='pt_br')
         self.calendario2.grid(row=1, column=2, padx=(50, 50), pady=(10, 240), rowspan=2)
 
+    def gerar_relatorio(self):
+
+        arquivopath = "calender.py"
+        subprocess.run(['python',  arquivopath])
 
 if __name__ == "__main__":
     app = App()
